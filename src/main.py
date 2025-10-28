@@ -1,12 +1,20 @@
+"""
+Enhanced version of main.py with database integration
+This file demonstrates how to integrate the DatabaseManager with the existing application
+"""
+
 from dotenv import load_dotenv
 from elevenlabs.client import ElevenLabs
 from elevenlabs.play import play
 import os
 import sys
 import csv
+from database_manager import DatabaseManager
 
-def pronounce_text(elevenlabs_client, text):
-    """Convert text to speech and play it"""
+def pronounce_text(elevenlabs_client, text) -> None:
+    """
+    Convert text to speech and play it
+    """
     audio = elevenlabs_client.text_to_speech.convert(
         text=text,
         voice_id="JBFqnCBsd6RMkjVDRZzb",
@@ -15,33 +23,53 @@ def pronounce_text(elevenlabs_client, text):
     )
     play(audio)
 
-def option_1_single_text(elevenlabs_client):
-    """Option 1: Get single text input and pronounce it"""
+def option_1_single_text(elevenlabs_client, db_manager):
+    """
+    Option 1: Given the user input, convert the text to speech and play it
+    Enhanced with database logging
+    """
     user_text = input("Please enter the text you want to convert to speech: ").strip()
     
     if not user_text:
         print("Error: No text provided.")
         return
     
+    # Log the single text input to database
+    try:
+        single_record_id = db_manager.insert_single_record(user_text)
+        print(f"Logged input to database (ID: {single_record_id})")
+    except Exception as e:
+        print(f"Warning: Could not log to database: {e}")
+    
     print(f"Pronouncing: '{user_text}'")
     pronounce_text(elevenlabs_client, user_text)
+    
+    # Log the pronunciation action to driver table
+    try:
+        driver_record_id = db_manager.insert_driver_record(user_text)
+        print(f"Logged pronunciation to database (ID: {driver_record_id})")
+    except Exception as e:
+        print(f"Warning: Could not log pronunciation to database: {e}")
 
-def option_2_csv_names(elevenlabs_client):
-    """Option 2: Read names from CSV file and pronounce each one"""
+def option_2_csv_names(elevenlabs_client, db_manager):
+    """
+    Option 2: Read names from CSV file and pronounce names one by one
+    Enhanced with database logging
+    """
     csv_file_path = input("Please enter the path to your CSV file containing names: ").strip()
     
     if not csv_file_path:
         print("Error: No CSV file path provided.")
         return
     
-    # Validate that the CSV file exists
+    # Check to see if the CSV file exists. If not, print an error message. 
     if not os.path.exists(csv_file_path):
         print(f"Error: CSV file '{csv_file_path}' does not exist.")
         return
     
     try:
         with open(csv_file_path, 'r', newline='', encoding='utf-8') as csvfile:
-            # Try to detect the delimiter
+
             sample = csvfile.read(1024)
             csvfile.seek(0)
             sniffer = csv.Sniffer()
@@ -49,7 +77,7 @@ def option_2_csv_names(elevenlabs_client):
             
             reader = csv.reader(csvfile, delimiter=delimiter)
             
-            # Skip header if it exists (optional)
+            # Check to see if the first row is header. 
             first_row = next(reader, None)
             if first_row is None:
                 print("Error: CSV file is empty.")
@@ -61,12 +89,10 @@ def option_2_csv_names(elevenlabs_client):
             
             names = []
             if is_header == 'y':
-                # Skip header, continue with remaining rows
                 for row in reader:
                     if row:  # Skip empty rows
                         names.extend([cell.strip() for cell in row if cell.strip()])
             else:
-                # Include first row
                 names.extend([cell.strip() for cell in first_row if cell.strip()])
                 for row in reader:
                     if row:  # Skip empty rows
@@ -75,6 +101,14 @@ def option_2_csv_names(elevenlabs_client):
             if not names:
                 print("Error: No names found in the CSV file.")
                 return
+            
+            # Log CSV upload to database
+            try:
+                csv_filename = os.path.basename(csv_file_path)
+                csv_record_id = db_manager.insert_csv_upload_record(csv_filename, names)
+                print(f"Logged CSV upload to database (ID: {csv_record_id})")
+            except Exception as e:
+                print(f"Warning: Could not log CSV upload to database: {e}")
             
             print(f"Found {len(names)} names to pronounce:")
             for i, name in enumerate(names, 1):
@@ -85,6 +119,13 @@ def option_2_csv_names(elevenlabs_client):
                 print(f"Pronouncing ({i}/{len(names)}): {name}")
                 pronounce_text(elevenlabs_client, name)
                 
+                # Log each name pronunciation to driver table
+                try:
+                    driver_record_id = db_manager.insert_driver_record(name)
+                    print(f"  -> Logged to database (ID: {driver_record_id})")
+                except Exception as e:
+                    print(f"  -> Warning: Could not log to database: {e}")
+                
                 # Add a small pause between names
                 if i < len(names):
                     input("Press Enter to continue to the next name...")
@@ -93,6 +134,39 @@ def option_2_csv_names(elevenlabs_client):
             
     except Exception as e:
         print(f"Error reading CSV file: {e}")
+
+def option_3_view_database(db_manager):
+    """
+    Option 3: View database statistics and recent records
+    """
+    try:
+        print("\n=== Database Statistics ===")
+        tables_info = db_manager.get_all_tables_info()
+        print(tables_info['summary'])
+        
+        print("\n=== Recent Driver Records (Last 5) ===")
+        driver_records = tables_info['driver_sample']
+        if not driver_records.empty:
+            print(driver_records.to_string(index=False))
+        else:
+            print("No driver records found.")
+        
+        print("\n=== Recent Single Records (Last 5) ===")
+        single_records = tables_info['single_sample']
+        if not single_records.empty:
+            print(single_records.to_string(index=False))
+        else:
+            print("No single records found.")
+        
+        print("\n=== Recent CSV Upload Records (Last 5) ===")
+        csv_records = tables_info['csv_upload_sample']
+        if not csv_records.empty:
+            print(csv_records.to_string(index=False))
+        else:
+            print("No CSV upload records found.")
+            
+    except Exception as e:
+        print(f"Error retrieving database information: {e}")
 
 if __name__ == "__main__":
     
@@ -103,19 +177,39 @@ if __name__ == "__main__":
         api_key=os.getenv("ELEVENLABS_API_KEY"),
     )
     
-    print("=== Name Pronunciation CLI ===")
+    # Initialize Database Manager
+    try:
+        db_manager = DatabaseManager()
+        if not db_manager.test_connection():
+            print("Warning: Database connection failed. Application will continue without database logging.")
+            db_manager = None
+    except Exception as e:
+        print(f"Warning: Could not initialize database: {e}")
+        print("Application will continue without database logging.")
+        db_manager = None
+    
+    print("=== Name Pronunciation CLI (Enhanced with Database) ===")
     print("Choose an option:")
     print("1. Enter text to pronounce")
     print("2. Upload CSV file with names to pronounce")
+    if db_manager:
+        print("3. View database statistics")
+    print("4. Exit")
     
     while True:
-        choice = input("\nEnter your choice (1 or 2): ").strip()
+        choice = input(f"\nEnter your choice (1-{4 if db_manager else 2}): ").strip()
         
         if choice == "1":
-            option_1_single_text(elevenlabs)
-            # break
+            option_1_single_text(elevenlabs, db_manager)
         elif choice == "2":
-            option_2_csv_names(elevenlabs)
-            # break
+            option_2_csv_names(elevenlabs, db_manager)
+        elif choice == "3" and db_manager:
+            option_3_view_database(db_manager)
+        elif choice == "4":
+            print("Goodbye!")
+            if db_manager:
+                db_manager.close_connection()
+            break
         else:
-            print("Invalid choice. Please enter 1 or 2.")
+            valid_choices = "1, 2" + (", 3" if db_manager else "") + ", 4"
+            print(f"Invalid choice. Please enter: {valid_choices}")
