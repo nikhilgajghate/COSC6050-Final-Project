@@ -4,40 +4,49 @@ This directory contains SQL scripts to set up the PostgreSQL database for the Na
 
 ## Database Schema
 
-The application uses three main tables:
+The application uses three main tables with a **parent-child relationship**:
 
-### 1. Driver Table
-- **Purpose**: Tracks individual text pronunciation operations
+### 1. Driver Table (Parent)
+- **Purpose**: Tracks all operations (both single text and CSV uploads)
 - **Columns**:
-  - `id` (UUID): Unique identifier, auto-generated
-  - `feature` (VARCHAR): Text that was converted to speech
+  - `id` (UUID): Primary key, auto-generated
+  - `feature` (VARCHAR): Type of operation ('single_text' or 'csv_upload')
   - `datetime` (TIMESTAMP): When the operation occurred
 
-### 2. Single Table
-- **Purpose**: Tracks single text input operations from users
+### 2. Single Table (Child)
+- **Purpose**: Stores detailed data for single text input operations
 - **Columns**:
-  - `id` (UUID): Unique identifier, auto-generated
+  - `id` (UUID): Primary key, **foreign key to Driver.id**
   - `input` (VARCHAR): User-provided text input for pronunciation
   - `datetime` (TIMESTAMP): When the operation occurred
+- **Relationship**: Each record must have a corresponding Driver record with the same ID
 
-### 3. CSV_Upload Table
-- **Purpose**: Tracks CSV file upload operations with stored contents
+### 3. CSV_Upload Table (Child)
+- **Purpose**: Stores detailed data for CSV file upload operations
 - **Columns**:
-  - `id` (UUID): Unique identifier, auto-generated
+  - `id` (UUID): Primary key, **foreign key to Driver.id**
   - `filename` (VARCHAR): Name of the uploaded CSV file
   - `contents` (JSONB): JSON representation of CSV file contents
   - `datetime` (TIMESTAMP): When the upload occurred
+- **Relationship**: Each record must have a corresponding Driver record with the same ID
 
 ## Setup Instructions
 
-### 1. Install PostgreSQL
-Make sure PostgreSQL is installed. You can do so by navigating to your command line interface and entering `psql` and entering your password at the User level. 
+### 1. Install Python Dependencies
+```bash
+pip install -r requirements.txt
+```
 
-### 2. Create Database
+### 2. Install PostgreSQL
+Make sure PostgreSQL is installed. 
+
+You can do so by navigating to your command line interface and entering `psql` and entering your password at the User level. 
+
+### 3. Create Database
 I'd recommend creating the database using the DBeaver user interface for ease. 
 
-### 3. Run Setup Scripts
-You can run the scripts in two ways:
+### 4. Run Setup Scripts
+After you create the database, navigate to your IDE to run the scripts to create the tables in two ways:
 
 #### Option A: Run Master Script (Recommended)
 ```bash
@@ -55,11 +64,6 @@ psql -U postgres -d name_pronunciation -f 03_create_csv_upload_table.sql
 ```
 
 ### 4. Configure Environment Variables
-Copy `.env.template` to `.env` and update the database connection details:
-
-```bash
-cp .env.template .env
-```
 
 Edit the `.env` file with your PostgreSQL connection details:
 ```
@@ -67,52 +71,47 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=name_pronunciation
 DB_USER=postgres
-DB_PASSWORD=your_password_here
-```
-
-### 5. Install Python Dependencies
-```bash
-pip install -r requirements.txt
+DB_PASSWORD=<this should be the password you entered when installing Postgres>
 ```
 
 ## File Descriptions
 
 - `00_setup_database.sql`: Initial database setup and extensions
-- `01_create_driver_table.sql`: Creates the Driver table
-- `02_create_single_table.sql`: Creates the Single table  
-- `03_create_csv_upload_table.sql`: Creates the CSV_Upload table
-- `create_all_tables.sql`: Master script that runs all setup scripts
+- `01_create_driver_table.sql`: Creates the Driver table (parent)
+- `02_create_single_table.sql`: Creates the Single table (child) with FK to Driver
+- `03_create_csv_upload_table.sql`: Creates the CSV_Upload table (child) with FK to Driver
+- `create_all_tables.sql`: Master script that runs all setup scripts in order
+- `drop_all_tables.sql`: Drops all tables (useful for starting fresh)
 - `README.md`: This documentation file
+
+## How the Relationship Works
+
+When a user performs an operation:
+
+1. **Single Text Operation** (Option 1):
+   - Create Driver record with `feature='single_text'` → Get ID (e.g., `123`)
+   - Create Single record with same ID `123` and the user's input text
+   - Both records share the same UUID
+
+2. **CSV Upload Operation** (Option 2):
+   - Create Driver record with `feature='csv_upload'` → Get ID (e.g., `456`)
+   - Create CSV_Upload record with same ID `456` and file details
+   - Both records share the same UUID
+
+This design allows you to:
+- Query Driver table to see all operations
+- Join with Single or CSV_Upload tables to get operation-specific details
+- Use the `feature` column to know which child table to join
 
 ## Testing the Setup
 
 After running the setup scripts, you can test the database connection using the Python DatabaseManager:
 
-```python
-from src.database_manager import DatabaseManager
-
-# Test connection
-db = DatabaseManager()
-if db.test_connection():
-    print("Database setup successful!")
-    
-    # View table info
-    info = db.get_all_tables_info()
-    print(info['summary'])
-else:
-    print("Database connection failed. Check your configuration.")
+```bash
+python src/database_manager.py
 ```
-
-## Indexes
-
-The tables include several indexes for optimal performance:
-- Datetime indexes for time-based queries
-- Text indexes for searching features/inputs
-- GIN index on JSONB column for JSON queries
 
 ## Security Notes
 
 - Never commit your `.env` file with real credentials
-- Consider using connection pooling for production environments
-- Use strong passwords for database users
-- Regularly backup your database
+

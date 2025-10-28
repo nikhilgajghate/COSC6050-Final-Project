@@ -74,32 +74,27 @@ class DatabaseManager:
         Insert a record into the Driver table.
         
         Args:
-            feature (str): The text feature that was processed
+            feature (str): The text feature that was processed (e.g., 'single_text', 'csv_upload')
             custom_datetime (datetime, optional): Custom timestamp, defaults to current time
             
         Returns:
             str: The UUID of the inserted record
         """
         try:
-            data = {
-                'feature': [feature]
-            }
-            if custom_datetime:
-                data['datetime'] = [custom_datetime]
-            
-            df = pd.DataFrame(data)
-            
-            # Insert and return the generated ID
+            # Insert with RETURNING clause to get the generated ID
             with self.engine.connect() as conn:
-                df.to_sql('driver', conn, if_exists='append', index=False, method='multi')
+                if custom_datetime:
+                    result = conn.execute(text(
+                        "INSERT INTO driver (feature, datetime) VALUES (:feature, :datetime) RETURNING id"
+                    ), {'feature': feature, 'datetime': custom_datetime})
+                else:
+                    result = conn.execute(text(
+                        "INSERT INTO driver (feature) VALUES (:feature) RETURNING id"
+                    ), {'feature': feature})
                 
-                # Get the most recent record ID
-                result = conn.execute(text(
-                    "SELECT id FROM driver WHERE feature = :feature ORDER BY datetime DESC LIMIT 1"
-                ), {'feature': feature})
+                conn.commit()
                 record_id = result.fetchone()[0]
                 
-            print(f"Driver record inserted with ID: {record_id}")
             return str(record_id)
             
         except Exception as e:
@@ -129,38 +124,33 @@ class DatabaseManager:
             raise
     
     # Single table operations
-    def insert_single_record(self, input_text: str, custom_datetime: Optional[datetime] = None) -> str:
+    def insert_single_record(self, driver_id: str, input_text: str, custom_datetime: Optional[datetime] = None) -> str:
         """
         Insert a record into the Single table.
         
         Args:
+            driver_id (str): The UUID from the Driver table (foreign key)
             input_text (str): The user input text
             custom_datetime (datetime, optional): Custom timestamp, defaults to current time
             
         Returns:
-            str: The UUID of the inserted record
+            str: The UUID of the inserted record (same as driver_id)
         """
         try:
-            data = {
-                'input': [input_text]
-            }
-            if custom_datetime:
-                data['datetime'] = [custom_datetime]
-            
-            df = pd.DataFrame(data)
-            
-            # Insert and return the generated ID
+            # Insert with the provided driver_id
             with self.engine.connect() as conn:
-                df.to_sql('single', conn, if_exists='append', index=False, method='multi')
+                if custom_datetime:
+                    conn.execute(text(
+                        "INSERT INTO single (id, input, datetime) VALUES (:id, :input, :datetime)"
+                    ), {'id': driver_id, 'input': input_text, 'datetime': custom_datetime})
+                else:
+                    conn.execute(text(
+                        "INSERT INTO single (id, input) VALUES (:id, :input)"
+                    ), {'id': driver_id, 'input': input_text})
                 
-                # Get the most recent record ID
-                result = conn.execute(text(
-                    "SELECT id FROM single WHERE input = :input ORDER BY datetime DESC LIMIT 1"
-                ), {'input': input_text})
-                record_id = result.fetchone()[0]
+                conn.commit()
                 
-            print(f"Single record inserted with ID: {record_id}")
-            return str(record_id)
+            return driver_id
             
         except Exception as e:
             print(f"Error inserting single record: {e}")
@@ -189,18 +179,19 @@ class DatabaseManager:
             raise
     
     # CSV_Upload table operations
-    def insert_csv_upload_record(self, filename: str, contents: List[str], 
+    def insert_csv_upload_record(self, driver_id: str, filename: str, contents: List[str], 
                                custom_datetime: Optional[datetime] = None) -> str:
         """
         Insert a record into the CSV_Upload table.
         
         Args:
+            driver_id (str): The UUID from the Driver table (foreign key)
             filename (str): The name of the CSV file
             contents (List[str]): List of names/content from the CSV
             custom_datetime (datetime, optional): Custom timestamp, defaults to current time
             
         Returns:
-            str: The UUID of the inserted record
+            str: The UUID of the inserted record (same as driver_id)
         """
         try:
             # Convert contents to JSON
@@ -209,27 +200,21 @@ class DatabaseManager:
                 'count': len(contents)
             })
             
-            data = {
-                'filename': [filename],
-                'contents': [contents_json]
-            }
-            if custom_datetime:
-                data['datetime'] = [custom_datetime]
-            
-            df = pd.DataFrame(data)
-            
-            # Insert and return the generated ID
+            # Insert with the provided driver_id
             with self.engine.connect() as conn:
-                df.to_sql('csv_upload', conn, if_exists='append', index=False, method='multi')
+                if custom_datetime:
+                    conn.execute(text(
+                        "INSERT INTO csv_upload (id, filename, contents, datetime) VALUES (:id, :filename, CAST(:contents AS jsonb), :datetime)"
+                    ), {'id': driver_id, 'filename': filename, 'contents': contents_json, 'datetime': custom_datetime})
+                else:
+                    conn.execute(text(
+                        "INSERT INTO csv_upload (id, filename, contents) VALUES (:id, :filename, CAST(:contents AS jsonb))"
+                    ), {'id': driver_id, 'filename': filename, 'contents': contents_json})
                 
-                # Get the most recent record ID
-                result = conn.execute(text(
-                    "SELECT id FROM csv_upload WHERE filename = :filename ORDER BY datetime DESC LIMIT 1"
-                ), {'filename': filename})
-                record_id = result.fetchone()[0]
+                conn.commit()
                 
-            print(f"CSV upload record inserted with ID: {record_id}")
-            return str(record_id)
+            print(f"CSV upload record inserted with ID: {driver_id}")
+            return driver_id
             
         except Exception as e:
             print(f"Error inserting CSV upload record: {e}")
@@ -255,6 +240,102 @@ class DatabaseManager:
             
         except Exception as e:
             print(f"Error retrieving CSV upload records: {e}")
+            raise
+    
+    # Query functions with joins
+    def get_single_operations_with_details(self, limit: Optional[int] = None) -> pd.DataFrame:
+        """
+        Get all single text operations joined with their driver records.
+        
+        Args:
+            limit (int, optional): Maximum number of records to retrieve
+            
+        Returns:
+            pd.DataFrame: Joined driver and single records
+        """
+        try:
+            query = """
+                SELECT 
+                    d.id,
+                    d.feature,
+                    d.datetime as operation_time,
+                    s.input as user_input
+                FROM driver d
+                INNER JOIN single s ON d.id = s.id
+                ORDER BY d.datetime DESC
+            """
+            if limit:
+                query += f" LIMIT {limit}"
+                
+            df = pd.read_sql(query, self.engine)
+            return df
+            
+        except Exception as e:
+            print(f"Error retrieving single operations with details: {e}")
+            raise
+    
+    def get_csv_operations_with_details(self, limit: Optional[int] = None) -> pd.DataFrame:
+        """
+        Get all CSV upload operations joined with their driver records.
+        
+        Args:
+            limit (int, optional): Maximum number of records to retrieve
+            
+        Returns:
+            pd.DataFrame: Joined driver and csv_upload records
+        """
+        try:
+            query = """
+                SELECT 
+                    d.id,
+                    d.feature,
+                    d.datetime as operation_time,
+                    c.filename,
+                    c.contents
+                FROM driver d
+                INNER JOIN csv_upload c ON d.id = c.id
+                ORDER BY d.datetime DESC
+            """
+            if limit:
+                query += f" LIMIT {limit}"
+                
+            df = pd.read_sql(query, self.engine)
+            return df
+            
+        except Exception as e:
+            print(f"Error retrieving CSV operations with details: {e}")
+            raise
+    
+    def get_operation_by_id(self, operation_id: str) -> pd.DataFrame:
+        """
+        Get a specific operation by ID with all details from related tables.
+        
+        Args:
+            operation_id (str): The UUID of the operation
+            
+        Returns:
+            pd.DataFrame: Complete operation details
+        """
+        try:
+            query = """
+                SELECT 
+                    d.id,
+                    d.feature,
+                    d.datetime,
+                    s.input,
+                    c.filename,
+                    c.contents
+                FROM driver d
+                LEFT JOIN single s ON d.id = s.id
+                LEFT JOIN csv_upload c ON d.id = c.id
+                WHERE d.id = :id
+            """
+            
+            df = pd.read_sql(query, self.engine, params={'id': operation_id})
+            return df
+            
+        except Exception as e:
+            print(f"Error retrieving operation by ID: {e}")
             raise
     
     # Utility functions
@@ -311,14 +392,14 @@ def example_usage():
     
     # Insert sample data
     try:
-        # Insert driver record
-        driver_id = db.insert_driver_record("Hello world")
+        # Example 1: Insert a single text operation
+        driver_id_1 = db.insert_driver_record("single_text")
+        single_id = db.insert_single_record(driver_id_1, "User typed: Hello there!")
         
-        # Insert single record  
-        single_id = db.insert_single_record("User typed: Hello there!")
-        
-        # Insert CSV upload record
+        # Example 2: Insert a CSV upload operation
+        driver_id_2 = db.insert_driver_record("csv_upload")
         csv_id = db.insert_csv_upload_record(
+            driver_id_2,
             "names.csv", 
             ["John", "Jane", "Bob", "Alice"]
         )

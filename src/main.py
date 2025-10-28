@@ -34,22 +34,16 @@ def option_1_single_text(elevenlabs_client, db_manager):
         print("Error: No text provided.")
         return
     
-    # Log the single text input to database
-    try:
-        single_record_id = db_manager.insert_single_record(user_text)
-        print(f"Logged input to database (ID: {single_record_id})")
-    except Exception as e:
-        print(f"Warning: Could not log to database: {e}")
-    
     print(f"Pronouncing: '{user_text}'")
     pronounce_text(elevenlabs_client, user_text)
     
-    # Log the pronunciation action to driver table
+    # Log to database: Create driver record first, then single record with same ID
     try:
-        driver_record_id = db_manager.insert_driver_record(user_text)
-        print(f"Logged pronunciation to database (ID: {driver_record_id})")
+        driver_id = db_manager.insert_driver_record('single_text')
+        single_id = db_manager.insert_single_record(driver_id, user_text)
+        print(f"Logged to database with ID: {driver_id}")
     except Exception as e:
-        print(f"Warning: Could not log pronunciation to database: {e}")
+        print(f"Warning: Could not log to database: {e}")
 
 def option_2_csv_names(elevenlabs_client, db_manager):
     """
@@ -102,36 +96,29 @@ def option_2_csv_names(elevenlabs_client, db_manager):
                 print("Error: No names found in the CSV file.")
                 return
             
-            # Log CSV upload to database
-            try:
-                csv_filename = os.path.basename(csv_file_path)
-                csv_record_id = db_manager.insert_csv_upload_record(csv_filename, names)
-                print(f"Logged CSV upload to database (ID: {csv_record_id})")
-            except Exception as e:
-                print(f"Warning: Could not log CSV upload to database: {e}")
-            
             print(f"Found {len(names)} names to pronounce:")
             for i, name in enumerate(names, 1):
                 print(f"{i}. {name}")
+            
+            # Log CSV upload to database: Create driver record first, then csv_upload with same ID
+            try:
+                csv_filename = os.path.basename(csv_file_path)
+                driver_id = db_manager.insert_driver_record('csv_upload')
+                csv_id = db_manager.insert_csv_upload_record(driver_id, csv_filename, names)
+                print(f"Logged CSV upload to database with ID: {driver_id}")
+            except Exception as e:
+                print(f"Warning: Could not log CSV upload to database: {e}")
             
             print("\nStarting pronunciation...")
             for i, name in enumerate(names, 1):
                 print(f"Pronouncing ({i}/{len(names)}): {name}")
                 pronounce_text(elevenlabs_client, name)
                 
-                # Log each name pronunciation to driver table
-                try:
-                    driver_record_id = db_manager.insert_driver_record(name)
-                    print(f"  -> Logged to database (ID: {driver_record_id})")
-                except Exception as e:
-                    print(f"  -> Warning: Could not log to database: {e}")
-                
                 # Add a small pause between names
                 if i < len(names):
                     input("Press Enter to continue to the next name...")
             
             print("Finished pronouncing all names!")
-            
     except Exception as e:
         print(f"Error reading CSV file: {e}")
 
@@ -144,26 +131,39 @@ def option_3_view_database(db_manager):
         tables_info = db_manager.get_all_tables_info()
         print(tables_info['summary'])
         
-        print("\n=== Recent Driver Records (Last 5) ===")
+        print("\n=== Recent Driver Records (All Operations) ===")
         driver_records = tables_info['driver_sample']
         if not driver_records.empty:
             print(driver_records.to_string(index=False))
         else:
             print("No driver records found.")
         
-        print("\n=== Recent Single Records (Last 5) ===")
-        single_records = tables_info['single_sample']
-        if not single_records.empty:
-            print(single_records.to_string(index=False))
-        else:
-            print("No single records found.")
+        print("\n=== Single Text Operations (with JOIN) ===")
+        try:
+            single_ops = db_manager.get_single_operations_with_details(limit=3)
+            if not single_ops.empty:
+                print(single_ops.to_string(index=False))
+            else:
+                print("No single text operations found.")
+        except Exception as e:
+            print(f"Could not retrieve single operations: {e}")
         
-        print("\n=== Recent CSV Upload Records (Last 5) ===")
-        csv_records = tables_info['csv_upload_sample']
-        if not csv_records.empty:
-            print(csv_records.to_string(index=False))
-        else:
-            print("No CSV upload records found.")
+        print("\n=== CSV Upload Operations (with JOIN) ===")
+        try:
+            csv_ops = db_manager.get_csv_operations_with_details(limit=3)
+            if not csv_ops.empty:
+                # Display without full JSON contents for readability
+                display_cols = ['id', 'feature', 'operation_time', 'filename']
+                available_cols = [col for col in display_cols if col in csv_ops.columns]
+                print(csv_ops[available_cols].to_string(index=False))
+            else:
+                print("No CSV upload operations found.")
+        except Exception as e:
+            print(f"Could not retrieve CSV operations: {e}")
+        
+        print("\n--- Schema Info ---")
+        print("Note: Driver.id is the primary key, shared by Single and CSV_Upload as foreign keys")
+        print("Each operation creates a Driver record + either Single or CSV_Upload record with the same ID")
             
     except Exception as e:
         print(f"Error retrieving database information: {e}")
