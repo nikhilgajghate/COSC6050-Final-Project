@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Index - G2I Template</title>
+  <meta name="description" content="">
+  <meta name="keywords" content="">
+
+  <!-- Favicons -->
+<link href="{{ url_for('static', filename='assets/img/favicon.png') }}" rel="icon">
+<link href="{{ url_for('static', filename='assets/img/apple-touch-icon.png') }}" rel="apple-touch-icon">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+
+  <!-- Vendor CSS Files -->
+<link href="{{ url_for('static', filename='assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='assets/vendor/aos/aos.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='assets/vendor/swiper/swiper-bundle.min.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='assets/vendor/glightbox/css/glightbox.min.css') }}" rel="stylesheet">
+
+<!-- Main CSS File -->
+<link href="{{ url_for('static', filename='assets/css/main.css') }}" rel="stylesheet">
+
+</head>
+
+<body class="index-page">
+
+  <header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
+
+      <a href="#hero" class="logo d-flex align-items-center">
+        <h1 class="sitename">G2I</h1>
+      </a>
+
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="#hero" class="active">Home</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+
+    </div>
+  </header>
+
+  <main class="main">
+
+
+<!-- ======= Hero Section ======= -->
+<section id="hero" class="hero section dark-background">
+  <div class="container">
+    <div class="row gy-4 align-items-center">
+
+      <!-- Left Column: Text + Functionality -->
+      <div class="col-lg-6 d-flex flex-column justify-content-center text-center text-md-start" data-aos="fade-up">
+
+        <h1 class="fw-bold text-white mb-3">Pronunciation Made Easy</h1>
+        <p class="text-light mb-4 fs-5">
+          Say every name the right way — powered by AI voice recognition and cultural respect.
+        </p>
+
+        <!-- Pronunciation Form -->
+        <form id="pronounceForm" method="POST" enctype="multipart/form-data" class="mb-3">
+          <div class="input-group mb-3" style="max-width:420px;margin:auto;">
+            <input type="text" name="name" class="form-control" placeholder="Enter a name..." required>
+            <button class="btn btn-primary" type="submit">Pronounce</button>
+          </div>
+
+          <div class="mb-3" style="max-width:420px;margin:auto; position: relative;">
+            <input type="file" id="csvFile" name="file" accept=".csv" class="form-control mb-2">
+            <div class="input-group">
+              <button type="button" id="uploadBtn" class="btn btn-primary w-100">
+                Upload & Pronounce
+              </button>
+            </div>
+
+            <!-- Status message box -->
+            <div id="statusBox"
+                 class="alert mt-3 text-center fw-semibold py-2"
+                 style="display:none; border-radius:8px;">
+            </div>
+          </div>
+        </form>
+
+        <p id="statusMsg" class="text-light mt-3 text-center"></p>
+        <!-- Audio Output -->
+        {% if audio_file %}
+        <audio autoplay style="display: none;">
+          <source src="{{ audio_file }}" type="audio/mpeg">
+        </audio>
+        {% endif %}
+
+      </div>
+      <!-- left column end -->
+
+      <!-- Right Column: Illustration -->
+      <div class="col-lg-6 text-center text-lg-end" data-aos="zoom-out">
+        <img src="{{ url_for('static', filename='assets/img/voice-illustration.svg') }}"
+             class="img-fluid" alt="Voice Illustration"
+             style="max-height:480px;">
+      </div>
+
+    </div> <!--  end of row -->
+  </div> <!-- end of container -->
+</section>
+<!-- End Hero Section -->
+
+
+    <!-- About Section -->
+    <section id="about" class="about section">
+
+      <div class="container" data-aos="fade-up" data-aos-delay="100">
+        <div class="row align-items-xl-center gy-5">
+
+          <div class="col-xl-5 content">
+            <h3>About Us</h3>
+            <h2>Empowering Voices, Connecting Cultures</h2>
+            <p>G2I (Get to Introduce) is a digital solution built to help people pronounce names correctly and respectfully.
+              In a world where names carry heritage, meaning, and pride, G2I bridges gaps in communication using intelligent voice technology.
+              Our mission is simple: to celebrate identity and make every name heard the right way
+            </p>
+            <p>
+              Whether you're a teacher welcoming students, an HR professional meeting new hires, or a global citizen learning new names,
+              G2I ensures that respect starts with pronunciation.
+            </p>
+          </div>
+
+          <div class="col-xl-6">
+            <img src="{{ url_for('static', filename='assets/img/g2i.svg') }}" class="img-fluid" alt="">
+          </div>
+        </div>
+      </div>
+
+    </section><!-- /About Section -->
+
+    <!-- Features Section -->
+    <section id="features" class="features section">
+
+      <!-- Section Title -->
+      <div class="container section-title" data-aos="fade-up">
+        <h2>Features</h2>
+        <p>Discover what makes G2I stand out in promoting correct name pronunciation and cultural respect.</p>
+      </div><!-- End Section Title -->
+
+      <div class="container">
+
+        <div class="row gy-4 align-items-center features-item">
+          <div class="col-md-5 d-flex align-items-center" data-aos="zoom-out" data-aos-delay="100">
+            <img src="{{ url_for('static', filename='assets/img/features-1.svg') }}" class="img-fluid" alt="">
+          </div>
+          <div class="col-md-7" data-aos="fade-up" data-aos-delay="100">
+            <h3>AI Voice Pronunciation</h3>
+            <p class="fst-italic">
+              Type any name and hear it pronounced instantly with a natural-sounding speech powered by an advanced text-to-speech technology.
+            </p>
+          </div>
+        </div><!-- Features 1 -->
+
+        <div class="row gy-4 align-items-center features-item">
+          <div class="col-md-5 order-1 order-md-2 d-flex align-items-center" data-aos="zoom-out" data-aos-delay="200">
+            <img src="{{ url_for('static', filename='assets/img/features-2.svg') }}" class="img-fluid" alt="">
+          </div>
+          <div class="col-md-7 order-2 order-md-1" data-aos="fade-up" data-aos-delay="200">
+            <h3>Smart Data Storage</h3>
+            <p class="fst-italic">
+              Each pronunciation is saved securely for future analysis or integration into larger systems.
+            </p>
+          </div>
+        </div><!-- Features 2 -->
+
+        <div class="row gy-4 align-items-center features-item">
+          <div class="col-md-5 d-flex align-items-center" data-aos="zoom-out">
+            <img src="{{ url_for('static', filename='assets/img/features-3.svg') }}" class="img-fluid" alt="">
+          </div>
+          <div class="col-md-7" data-aos="fade-up">
+            <h3>CSV Upload</h3>
+            <p>Upload a CSV file containing multiple names and let G2I process and pronounce them all automatically.</p>
+          </div>
+        </div><!-- Features 3 -->
+
+        <div class="row gy-4 align-items-center features-item">
+          <div class="col-md-5 order-1 order-md-2 d-flex align-items-center" data-aos="zoom-out">
+            <img src="{{ url_for('static', filename='assets/img/features-4.svg') }}" class="img-fluid" alt="">
+          </div>
+          <div class="col-md-7 order-2 order-md-1" data-aos="fade-up">
+            <h3>Developer API</h3>
+            <p class="fst-italic">
+              Integrate name pronunciation directly into your application using G2I's REST API built for developers.
+            </p>
+          </div>
+        </div><!-- Features 4 -->
+
+      </div>
+
+    </section><!-- /Features Section -->
+
+    <!-- Testimonials Section -->
+    <section id="testimonials" class="testimonials section light-background">
+
+      <!-- Section Title -->
+      <div class="container section-title" data-aos="fade-up">
+        <h2>Testimonials</h2>
+        <p>Hearing someone pronounce your name correctly isn't just nice, it's a sign of respect.</p>
+      </div><!-- End Section Title -->
+
+      <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+        <div class="swiper init-swiper">
+          <script type="application/json" class="swiper-config">
+            {
+              "loop": true,
+              "speed": 600,
+              "autoplay": {
+                "delay": 5000
+              },
+              "slidesPerView": "auto",
+              "pagination": {
+                "el": ".swiper-pagination",
+                "type": "bullets",
+                "clickable": true
+              }
+            }
+          </script>
+          <div class="swiper-wrapper">
+
+            <div class="swiper-slide">
+              <div class="testimonial-item">
+                <img src="{{ url_for('static', filename='assets/img/testimonials-1.jpg') }}" class="testimonial-img" alt="">
+                <h3>Bonczkiewicz Brad</h3>
+                <h4>Director of Technology</h4>
+                <div class="stars">
+                  <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                </div>
+                <p>
+                  <i class="bi bi-quote quote-icon-left"></i>
+                  <span>I have always struggled pronouncing international students' name who is working in my lab correctly. G2I
+                  has completely changed that. It's fast, accurate and make my lab feel more inclusive.</span>
+                  <i class="bi bi-quote quote-icon-right"></i>
+                </p>
+              </div>
+            </div><!-- End testimonial item -->
+
+            <div class="swiper-slide">
+              <div class="testimonial-item">
+                <img src="{{ url_for('static', filename='assets/img/testimonials-2.jpg') }}" class="testimonial-img" alt="">
+                <h3>Sarah Brongiel</h3>
+                <h4>HR Manager</h4>
+                <div class="stars">
+                  <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                </div>
+                <p>
+                  <i class="bi bi-quote quote-icon-left"></i>
+                  <span>We use G2I during new employee onboarding to ensure every name is said right. It might seem small, but it helps us build respect and connection from day one.</span>
+                  <i class="bi bi-quote quote-icon-right"></i>
+                </p>
+              </div>
+            </div><!-- End testimonial item -->
+
+            <div class="swiper-slide">
+              <div class="testimonial-item">
+                <img src="{{ url_for('static', filename='assets/img/testimonials-3.jpg') }}" class="testimonial-img" alt="">
+                <h3>Sylvester Mensah</h3>
+                <h4>Software Engineer</h4>
+                <div class="stars">
+                  <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                </div>
+                <p>
+                  <i class="bi bi-quote quote-icon-left"></i>
+                  <span>Integrating G2I's API into our app was seamless. Now users can hear correct name pronunciation instantly, without leaving our platform.</span>
+                  <i class="bi bi-quote quote-icon-right"></i>
+                </p>
+              </div>
+            </div><!-- End testimonial item -->
+
+            <div class="swiper-slide">
+              <div class="testimonial-item">
+                <img src="{{ url_for('static', filename='assets/img/testimonials-4.jpg') }}" class="testimonial-img" alt="">
+                <h3>Ayodele Kayode</h3>
+                <h4>Graduate Student</h4>
+                <div class="stars">
+                  <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                </div>
+                <p>
+                  <i class="bi bi-quote quote-icon-left"></i>
+                  <span>As an international student, hearing my name pronounced correctly makes me feel seen. G2I gets it right every single time</span>
+                  <i class="bi bi-quote quote-icon-right"></i>
+                </p>
+              </div>
+            </div><!-- End testimonial item -->
+
+            <div class="swiper-slide">
+              <div class="testimonial-item">
+                <img src="{{ url_for('static', filename='assets/img/testimonials-5.jpg') }}" class="testimonial-img" alt="">
+                <h3>John Thompson</h3>
+                <h4>Senior Recruiter</h4>
+                <div class="stars">
+                  <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                </div>
+                <p>
+                  <i class="bi bi-quote quote-icon-left"></i>
+                  <span>In global recruitment, correct pronunciation builds trust. G2I helps us personalize our candidate experience, one name at a time.</span>
+                  <i class="bi bi-quote quote-icon-right"></i>
+                </p>
+              </div>
+            </div><!-- End testimonial item -->
+
+          </div>
+          <div class="swiper-pagination"></div>
+        </div>
+
+      </div>
+
+    </section><!-- /Testimonials Section -->
+
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact section">
+
+      <!-- Section Title -->
+      <div class="container section-title" data-aos="fade-up">
+        <h2>Contact</h2>
+        <p>Have feedback or suggestions about the App?</p>
+      </div><!-- End Section Title -->
+
+      <div class="container" data-aos="fade" data-aos-delay="100">
+
+        <div class="row gy-4">
+
+          <div class="col-lg-4">
+            <a href="https://www.google.com/maps?q=1313+W+Wisconsin+Ave,+Milwaukee,+WI+53233"
+               target="_blank"
+               class="info-item d-flex align-items-center text-decoration-none">
+              <i class="bi bi-geo-alt flex-shrink-0"></i>
+              <div class="ms-3">
+                <h3>Address</h3>
+                <p>1313 W Wisconsin Ave, Milwaukee, WI 53233</p>
+              </div>
+            </a><!-- End Info Item -->
+
+           <a href="tel:+14143648567" class="info-item d-flex align-items-center text-decoration-none">
+             <i class="bi bi-telephone flex-shrink-0"></i>
+             <div class="ms-3">
+               <h3>Call Us</h3>
+               <p class="mb-0">+1 (414) 364-8567</p>
+             </div>
+           </a><!-- End Info Item -->
+
+            <a href="mailto:nikhil.gajghate@marquette.edu"
+               class="info-item d-flex align-items-center text-decoration-none">
+              <i class="bi bi-envelope flex-shrink-0"></i>
+              <div class="ms-3">
+                <h3>Email Us</h3>
+                <p>support@g2i.com</p>
+              </div>
+            </a><!-- End Info Item -->
+
+          </div>
+
+          <div class="col-lg-8">
+            <form action="forms/contact.php" method="post" class="php-email-form" data-aos="fade-up" data-aos-delay="200">
+              <div class="row gy-4">
+
+                <div class="col-md-6">
+                  <input type="text" name="name" class="form-control" placeholder="Your Name" required="">
+                </div>
+
+                <div class="col-md-6 ">
+                  <input type="email" class="form-control" name="email" placeholder="Your Email" required="">
+                </div>
+
+                <div class="col-md-12">
+                  <input type="text" class="form-control" name="subject" placeholder="Subject" required="">
+                </div>
+
+                <div class="col-md-12">
+                  <textarea class="form-control" name="message" rows="6" placeholder="Message" required=""></textarea>
+                </div>
+
+                <div class="col-md-12 text-center">
+                  <div class="loading">Loading</div>
+                  <div class="error-message"></div>
+                  <div class="sent-message">Your message has been sent. Thank you!</div>
+
+                  <button type="submit">Send Message</button>
+                </div>
+
+              </div>
+            </form>
+          </div><!-- End Contact Form -->
+
+        </div>
+
+      </div>
+
+    </section><!-- /Contact Section -->
+
+  </main>
+
+  <!-- Footer Section -->
+  <footer id="footer" class="footer dark-background">
+    <div class="container">
+      <h3 class="sitename">G2I</h3>
+      <p>Helping people say names right through clarity, warmth and diversity.</p>
+      <div class="social-links d-flex justify-content-center">
+        <a href=""><i class="bi bi-twitter-x"></i></a>
+        <a href=""><i class="bi bi-facebook"></i></a>
+        <a href=""><i class="bi bi-instagram"></i></a>
+        <a href=""><i class="bi bi-skype"></i></a>
+        <a href=""><i class="bi bi-linkedin"></i></a>
+      </div>
+      <div class="container">
+        <div class="copyright">
+          <span>Copyright</span> <strong class="px-1 sitename">G2I</strong> <span>All Rights Reserved</span>
+        </div>
+        <div class="credits">
+          Designed by <a>Godsfavour & Nikhil</a> Distributed by <a href="https://www.marquette.edu" target="_blank">Marquette University</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scroll Top -->
+  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+  <!-- Preloader -->
+  <div id="preloader"></div>
+
+<!-- Vendor JS Files -->
+<script src="{{ url_for('static', filename='assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendor/php-email-form/validate.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendor/aos/aos.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendor/swiper/swiper-bundle.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendor/glightbox/js/glightbox.min.js') }}"></script>
+
+<!-- Main JS File -->
+<script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>
+
+<!-- Single Pronounce (single name) -->
+<script>
+document.getElementById('pronounceForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const formData = new FormData(this);
+  const button = this.querySelector('button');
+  button.disabled = true;
+  button.textContent = 'Loading...';
+
+  try {
+    const response = await fetch('/pronounce', { method: 'POST', body: formData });
+    const result = await response.json();
+
+    if (result.audio_url) {
+      const audio = new Audio(result.audio_url);
+      await audio.play();
+    } else {
+      alert('Error: ' + (result.error || 'Unable to pronounce name.'));
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Request failed.');
+  }
+
+  button.disabled = false;
+  button.textContent = 'Pronounce';
+});
+</script>
+
+<!-- Unlock Chrome/Safari audio playback -->
+<script>
+let userInteracted = false;
+document.addEventListener('click', () => {
+  if (!userInteracted) {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    ctx.resume().then(() => {
+      console.log(" Audio unlocked in Chrome/Safari");
+      userInteracted = true;
+    });
+  }
+});
+</script>
+
+<!-- CSV UPLOAD & PRONOUNCE -->
+<script>
+document.getElementById('uploadBtn').addEventListener('click', async function () {
+  const fileInput = document.getElementById('csvFile');
+  const uploadBtn = this;
+  const statusBox = document.getElementById('statusBox');
+
+  // Reset status box
+  statusBox.style.display = "none";
+  statusBox.textContent = "";
+  statusBox.className = "alert mt-3 text-center fw-semibold py-2";
+
+  if (!fileInput.files.length) {
+    alert('Please select a CSV file first.');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('file', fileInput.files[0]);
+
+  uploadBtn.disabled = true;
+  uploadBtn.textContent = 'Uploading...';
+
+  statusBox.style.display = "block";
+  statusBox.style.backgroundColor = "#f0ad4e";
+  statusBox.style.color = "white";
+  statusBox.textContent = "⏳ Generating pronunciations...";
+
+  try {
+    const response = await fetch('/upload', { method: 'POST', body: formData });
+    const result = await response.json();
+    console.log('✅ Flask returned:', result);
+
+    if (!result.audios || result.audios.length === 0) {
+      throw new Error('No valid names received.');
+    }
+
+    statusBox.style.backgroundColor = "#0275d8";
+    statusBox.textContent = `✅ Received ${result.audios.length} names. Starting playback...`;
+
+    // --- Wait for a click unlock before playing ---
+    await new Promise((resolve) => {
+      if (userInteracted) return resolve();
+      const unlockHandler = () => {
+        userInteracted = true;
+        document.removeEventListener('click', unlockHandler);
+        resolve();
+      };
+      document.addEventListener('click', unlockHandler);
+      console.log("🟡 Waiting for user interaction to start audio...");
+    });
+
+    // --- Sequential playback ---
+    for (const [i, item] of result.audios.entries()) {
+      const cleanName = item.name.replace(/[^\w\s]/gi, '');
+      const audioUrl = item.audio_url;
+      console.log(`▶️ Playing (${i + 1}/${result.audios.length}):`, cleanName, audioUrl);
+
+      statusBox.textContent = `🔊 (${i + 1}/${result.audios.length}) Pronouncing: ${cleanName}`;
+      const audio = new Audio(audioUrl);
+
+      await new Promise((resolve) => {
+        audio.onended = () => resolve();
+        audio.onerror = (e) => {
+          console.error("❌ Error loading/playing audio:", e);
+          resolve();
+        };
+        audio.play().catch((err) => {
+          console.error("⚠️ Audio play blocked:", err);
+          resolve();
+        });
+      });
+
+      // wait 2 seconds before next name
+      await new Promise(r => setTimeout(r, 2000));
+    }
+
+    // ✅ Done
+    statusBox.style.backgroundColor = "#28a745";
+    statusBox.textContent = "✅ All names pronounced successfully!";
+  } catch (err) {
+    console.error('❌ Upload or playback error:', err);
+    statusBox.style.backgroundColor = "#dc3545";
+    statusBox.textContent = "❌ Something went wrong — check console.";
+  } finally {
+    uploadBtn.disabled = false;
+    uploadBtn.textContent = 'Upload & Pronounce';
+  }
+});
+</script>
+</body>
+</html>
