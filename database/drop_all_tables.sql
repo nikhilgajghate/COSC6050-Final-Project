@@ -1,7 +1,6 @@
--- Script to drop all tables (useful for starting fresh)
--- Run this if you need to recreate the database from scratch
+-- Script to drop all tables: For local development purposes.
 
--- Drop in reverse order due to foreign key constraints
+-- Dropping in reverse order to not violate foreign key constraints.
 DROP TABLE IF EXISTS CSV_Upload CASCADE;
 DROP TABLE IF EXISTS Single CASCADE;
 DROP TABLE IF EXISTS Driver CASCADE;

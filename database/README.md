@@ -2,10 +2,6 @@
 
 This directory contains SQL scripts to set up the PostgreSQL database for the Name Pronunciation CLI application.
 
-## Database Schema
-
-The application uses three main tables with a **parent-child relationship**:
-
 ### 1. Driver Table (Parent)
 - **Purpose**: Tracks all operations (both single text and CSV uploads)
 - **Columns**:
@@ -81,7 +77,7 @@ DB_PASSWORD=<this should be the password you entered when installing Postgres>
 - `02_create_single_table.sql`: Creates the Single table (child) with FK to Driver
 - `03_create_csv_upload_table.sql`: Creates the CSV_Upload table (child) with FK to Driver
 - `create_all_tables.sql`: Master script that runs all setup scripts in order
-- `drop_all_tables.sql`: Drops all tables (useful for starting fresh)
+- `drop_all_tables.sql`: Drops all tables (useful for starting fresh during local dev)
 - `README.md`: This documentation file
 
 ## How the Relationship Works
