@@ -2,7 +2,7 @@ import csv
 import sys, os
 from pathlib import Path
 from flask import Flask, render_template, request, jsonify, url_for
-from iteration1 import pronounce_name
+from service import pronounce_name
 from databridge import get_db
 
 app = Flask(__name__,
@@ -34,9 +34,9 @@ def pronounce():
             try:
                 driver_id = db.insert_driver_record("single_text")
                 db.insert_single_record(driver_id, name)
-                print(f"📝 Logged single pronunciation to database: {name}")
+                print(f"Logged single pronunciation to database: {name}")
             except Exception as db_error:
-                print(f"⚠️  Database logging failed: {db_error}")
+                print(f"Database logging failed: {db_error}")
                 # Continue even if database logging fails
 
         return jsonify({"audio_url": audio_url})
@@ -90,9 +90,9 @@ def upload():
         try:
             driver_id = db.insert_driver_record("csv_upload")
             db.insert_csv_upload_record(driver_id, file.filename, names_list)
-            print(f"📝 Logged CSV upload to database: {file.filename} ({len(names_list)} names)")
+            print(f"Logged CSV upload to database: {file.filename} ({len(names_list)} names)")
         except Exception as db_error:
-            print(f"⚠️  Database logging failed: {db_error}")
+            print(f"Database logging failed: {db_error}")
             # Continue even if database logging fails
 
     print("Returning JSON:", audio_urls)
