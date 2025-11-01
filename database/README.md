@@ -61,8 +61,13 @@ psql -U postgres -d name_pronunciation -f 03_create_csv_upload_table.sql
 
 ### 4. Configure Environment Variables
 
-Edit the `.env` file with your PostgreSQL connection details:
-```
+Create a `.env` file in the **project root** directory with the following:
+
+```env
+# ElevenLabs API (Required for pronunciation)
+ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
+
+# Database Configuration (Required for database logging)
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=name_pronunciation
@@ -70,44 +75,63 @@ DB_USER=postgres
 DB_PASSWORD=<this should be the password you entered when installing Postgres>
 ```
 
-## File Descriptions
+**Important Notes:**
+- Never commit `.env` file to version control
+- The Flask backend will work **without** database configured (it will just skip logging)
+- Database is optional but recommended for tracking usage
 
-- `00_setup_database.sql`: Initial database setup and extensions
-- `01_create_driver_table.sql`: Creates the Driver table (parent)
-- `02_create_single_table.sql`: Creates the Single table (child) with FK to Driver
-- `03_create_csv_upload_table.sql`: Creates the CSV_Upload table (child) with FK to Driver
-- `create_all_tables.sql`: Master script that runs all setup scripts in order
-- `drop_all_tables.sql`: Drops all tables (useful for starting fresh during local dev)
-- `README.md`: This documentation file
+## 🏃 Running the Application
 
-## How the Relationship Works
+### With Database (Recommended)
 
-When a user performs an operation:
+```bash
+# 1. Set up database
+Follow the above steps to set up the database
 
-1. **Single Text Operation** (Option 1):
-   - Create Driver record with `feature='single_text'` → Get ID (e.g., `123`)
-   - Create Single record with same ID `123` and the user's input text
-   - Both records share the same UUID
+# 2. Start Flask backend
+cd src/Backend
+python app.py
 
-2. **CSV Upload Operation** (Option 2):
-   - Create Driver record with `feature='csv_upload'` → Get ID (e.g., `456`)
-   - Create CSV_Upload record with same ID `456` and file details
-   - Both records share the same UUID
+# 3. Open browser to http://localhost:5000
+```
 
-This design allows you to:
-- Query Driver table to see all operations
-- Join with Single or CSV_Upload tables to get operation-specific details
-- Use the `feature` column to know which child table to join
+### SQL Scripts
+- `00_setup_database.sql` - Initial database setup and extensions
+- `01_create_driver_table.sql` - Creates the Driver table (parent)
+- `02_create_single_table.sql` - Creates the Single table (child) with FK to Driver
+- `03_create_csv_upload_table.sql` - Creates the CSV_Upload table (child) with FK to Driver
+- `create_all_tables.sql` - Master script that runs all setup scripts in order
+- `drop_all_tables.sql` - Drops all tables (useful for starting fresh)
+- `README.md` - This documentation file
 
-## Testing the Setup
+## 🧪 Testing the Setup
 
-After running the setup scripts, you can test the database connection using the Python DatabaseManager:
+After running the setup scripts, you can test in multiple ways:
 
+### 1. Direct Python Test
 ```bash
 python src/database_manager.py
 ```
 
-## Security Notes
+### 2. Flask API Health Check
+```bash
+# Start Flask app
+cd src/Backend && python app.py
 
-- Never commit your `.env` file with real credentials
+# In another terminal
+curl http://localhost:5000/api/health
+```
 
+Expected output:
+```json
+{
+  "status": "healthy",
+  "database": "connected"
+}
+```
+
+### 3. Use the Application
+1. Start Flask: `python src/Backend/app.py`
+2. Open browser: http://localhost:5000
+3. Pronounce a name or upload CSV
+4. Check database logs in console
