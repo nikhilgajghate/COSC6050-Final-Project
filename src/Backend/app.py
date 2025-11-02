@@ -30,34 +30,33 @@ def pronounce():
     if not name:
         return jsonify({"error": "No name provided"}), 400
 
-    try:
-        # Generate and save pronunciation audio
-        audio_path = pronounce_name(name)
-        audio_url = url_for('static', filename=f"audio/{os.path.basename(audio_path)}")
+    # Generate and save pronunciation audio
+    audio_path = pronounce_name(name)
+    audio_url = url_for('static', filename=f"audio/{os.path.basename(audio_path)}")
 
-        # Log to database if available
-        db = get_db()
-        if db:
-            try:
-                # Insert driver record
-                driver_id = db.insert_driver_record("single_text")
+    # Log to database if available
+    db = get_db()
+    if db:
+        try:
+            # Insert driver record
+            driver_id = db.insert_driver_record("single_text")
 
-                # Insert user input into single table
-                single_id = db.insert_single_record(driver_id, name)
-                print(f"Logged single pronunciation to database: {name}")
+            # Insert user input into single table
+            single_id = db.insert_single_record(driver_id, name)
+            print(f"Logged single pronunciation to database: {name}")
 
-                return jsonify({
-                    "user request": name,
-                    "status": "success",
-                })
-            except Exception as db_error:
-                print(f"Database logging failed: {db_error}")
+            return jsonify({
+                "user request": name,
+                "status": "success",
+            })
+        except Exception as db_error:
+            print(f"Database logging failed: {db_error}")
 
-                return jsonify({
-                    "user request": name,
-                    "status": "error",
-                    "error": str(db_error),
-                }), 500
+            return jsonify({
+                "user request": name,
+                "status": "error",
+                "error": str(db_error),
+            }), 500
 
 
 # Handles CSV uploads
