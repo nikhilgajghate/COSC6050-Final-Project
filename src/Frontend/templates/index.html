@@ -91,6 +91,14 @@
         </form>
 
         <p id="statusMsg" class="text-light mt-3 text-center"></p>
+
+        <!-- Name Facts Box -->
+        <div id="factsBox"
+             class="alert alert-info mt-3"
+             style="display:none; max-width:420px; margin:auto; border-radius:8px;">
+
+        </div>
+
         <!-- Audio Output -->
         {% if audio_file %}
         <audio autoplay style="display: none;">
@@ -463,6 +471,10 @@ document.getElementById('pronounceForm').addEventListener('submit', async functi
     } else {
       alert('Error: ' + (result.error || 'Unable to pronounce name.'));
     }
+
+    // load meaning and origin
+    getNameFacts(formData.get("name"));
+
   } catch (err) {
     console.error(err);
     alert('Request failed.');
@@ -471,6 +483,69 @@ document.getElementById('pronounceForm').addEventListener('submit', async functi
   button.disabled = false;
   button.textContent = 'Pronounce';
 });
+</script>
+
+<script>
+// Converts ISO country code to full country name
+function countryName(code) {
+  try {
+    const regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
+    return regionNames.of(code);
+  } catch (err) {
+    return code;
+  }
+}
+
+// Fetch origin + ethnicity
+async function getNameFacts(name) {
+    const formData = new FormData();
+    formData.append("name", name);
+
+    const factsBox = document.getElementById("factsBox");
+    factsBox.style.display = "block";
+    factsBox.style.backgroundColor = "#0275d8";
+    factsBox.style.color = "white";
+    factsBox.textContent = "Loading name facts...";
+
+    try {
+        const response = await fetch("/name_facts", {
+            method: "POST",
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.error) {
+            factsBox.style.backgroundColor = "#dc3545";
+            factsBox.textContent = "❌ " + result.error;
+            return;
+        }
+
+        // Format ethnicity block
+        let ethnicityHtml = "";
+        if (result.ethnicity && result.ethnicity.length > 0) {
+            ethnicityHtml = "<br><strong>🌎 Likely Ethnicity:</strong><br>";
+
+            result.ethnicity.forEach(e => {
+                ethnicityHtml += `• ${countryName(e.country)} — ${e.probability}%<br>`;
+            });
+
+        } else {
+            ethnicityHtml = "<br><strong>🌎 Likely Ethnicity:</strong> Not available<br>";
+        }
+
+        // FINAL OUTPUT IN BOX
+        factsBox.innerHTML = `
+            <strong>${result.name}</strong><br>
+            🌍 <strong>Origin:</strong> ${result.origin}<br>
+            ${ethnicityHtml}
+        `;
+
+    } catch (err) {
+        factsBox.style.backgroundColor = "#dc3545";
+        factsBox.textContent = "Error retrieving name facts.";
+    }
+}
 </script>
 
 <!-- Unlock Chrome/Safari audio playback -->
@@ -543,6 +618,9 @@ document.getElementById('uploadBtn').addEventListener('click', async function ()
     for (const [i, item] of result.audios.entries()) {
       const cleanName = item.name.replace(/[^\w\s]/gi, '');
       const audioUrl = item.audio_url;
+
+      await getNameFacts(cleanName);
+
       console.log(`▶️ Playing (${i + 1}/${result.audios.length}):`, cleanName, audioUrl);
 
       statusBox.textContent = `🔊 (${i + 1}/${result.audios.length}) Pronouncing: ${cleanName}`;
@@ -564,9 +642,22 @@ document.getElementById('uploadBtn').addEventListener('click', async function ()
       await new Promise(r => setTimeout(r, 2000));
     }
 
-    // ✅ Done
+    // Done
     statusBox.style.backgroundColor = "#28a745";
     statusBox.textContent = "✅ All names pronounced successfully!";
+
+    // Fade message out after 3 seconds
+    setTimeout(() => {
+        statusBox.style.transition = "opacity 1s ease";
+        statusBox.style.opacity = "0";
+
+        // After fade finishes, hide completely
+        setTimeout(() => {
+            statusBox.style.display = "none";
+            statusBox.style.opacity = "1";  // reset for next use
+        }, 1000);
+    }, 3000);
+
   } catch (err) {
     console.error('❌ Upload or playback error:', err);
     statusBox.style.backgroundColor = "#dc3545";

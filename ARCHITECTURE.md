@@ -4,17 +4,17 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                           G2I Application                            │
+│                           G2I Application                           │
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────┐
-│                          Frontend Layer                              │
+│                          Frontend Layer                             │
 ├─────────────────────────────────────────────────────────────────────┤
 │  Web UI (index.html)                                                │
 │  ├─ Single Name Input Form                                          │
 │  ├─ CSV Upload Form                                                 │
 │  └─ Audio Playback                                                  │
-│                                                                      │
+│                                                                     │
 │  JavaScript                                                         │
 │  ├─ Form submission handlers                                        │
 │  ├─ AJAX requests to backend                                        │
@@ -22,21 +22,21 @@
 └─────────────────────────────────────────────────────────────────────┘
                                ↕ HTTP/AJAX
 ┌─────────────────────────────────────────────────────────────────────┐
-│                          Backend Layer (Flask)                       │
+│                          Backend Layer (Flask)                      │
 ├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
+│                                                                     │
 │  app.py (Flask Server)                                              │
 │  ├─ Routes                                                          │
-│  │  ├─ GET  /                  → Serve HTML                        │
-│  │  ├─ POST /pronounce         → Single pronunciation             │
-│  │  ├─ POST /upload            → CSV batch processing             │
-│  │  ├─ GET  /api/health        → Health check                     │
-│  │  ├─ GET  /api/stats         → Database stats                   │
-│  │  ├─ GET  /api/operations/*  → Query operations                 │
+│  │  ├─ GET  /                  → Serve HTML                         │
+│  │  ├─ POST /pronounce         → Single pronunciation               │
+│  │  ├─ POST /upload            → CSV batch processing               │
+│  │  ├─ GET  /api/health        → Health check                       │
+│  │  ├─ GET  /api/stats         → Database stats                     │
+│  │  ├─ GET  /api/operations/*  → Query operations                   │
 │  │                                                                  │
 │  └─ Database Integration                                            │
-│     └─ get_db() → Lazy initialization with graceful degradation    │
-│                                                                      │
+│     └─ get_db() → Lazy initialization with graceful degradation     │
+│                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
          ↓                              ↓                       ↓
     ┌────────┐                   ┌──────────────┐        ┌─────────────┐
@@ -45,30 +45,30 @@
     └────────┘                   └──────────────┘        └─────────────┘
          ↓                              ↓                       ↓
 ┌─────────────────┐         ┌──────────────────────┐   ┌───────────────┐
-│ iteration1.py   │         │ database_manager.py  │   │   External    │
+│ app.py          │         │ database_manager.py  │   │   External    │
 │                 │         │                      │   │   Service     │
 │ pronounce_name()│         │ Data Bridge Layer    │   │               │
-│ - Text→Speech  │         │ ├─ insert_driver     │   │ - Voice Gen   │
-│ - Save MP3     │         │ ├─ insert_single     │   │ - Multilingual│
-└─────────────────┘         │ ├─ insert_csv_upload│   │ - High Quality│
-                             │ ├─ get_operations   │   └───────────────┘
-                             │ └─ get_stats        │
-                             └──────────────────────┘
+│ - Text→Speech   │         │ ├─ insert_driver     │   │ - Voice Gen   │
+│ - Save MP3      │         │ ├─ insert_single     │   │ - Multilingual│
+└─────────────────┘         │ ├─ insert_csv_upload │   │ - High Quality│
+                            │ ├─ get_operations    │   └───────────────┘
+                            │ └─ get_stats         │
+                            └──────────────────────┘
                                        ↓
                              ┌──────────────────────┐
                              │   PostgreSQL DB      │
                              │                      │
-                             │  ┌────────────┐     │
-                             │  │  driver    │     │
-                             │  │ (parent)   │     │
-                             │  └─────┬──────┘     │
-                             │        │            │
-                             │   ┌────┴─────┐     │
-                             │   │          │     │
-                             │  ┌▼──────┐ ┌▼──┐  │
-                             │  │single │ │csv│  │
-                             │  │(child)│ │   │  │
-                             │  └───────┘ └───┘  │
+                             │  ┌────────────┐      │
+                             │  │  driver    │      │
+                             │  │ (parent)   │      │
+                             │  └─────┬──────┘      │
+                             │        │             │
+                             │   ┌────┴─────┐       │
+                             │   │          │       │
+                             │  ┌▼──────┐ ┌▼──┐     │
+                             │  │single │ │csv│     │
+                             │  │(child)│ │   │     │
+                             │  └───────┘ └───┘     │
                              └──────────────────────┘
 ```
 
@@ -78,8 +78,8 @@
 
 ```
 ┌──────┐     ┌───────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
-│ User │────>│Browser│────>│  Flask   │────>│iteration1│────>│ElevenLabs│
-│      │     │  UI   │     │ /pronounce    │          │     │   API    │
+│ User │────>│Browser│────>│  Flask   │────>│app.py    │────>│ElevenLabs│
+│      │     │  UI   │     │ /pronounce     │          │     │   API    │
 └──────┘     └───────┘     └──────────┘     └──────────┘     └──────────┘
                   ↓              ↓                ↓                 ↓
               Submit         Route            Generate           Convert
@@ -92,7 +92,7 @@
                   │              │           Save MP3
                   │              │                ↓
                   │              ↓           ┌──────────┐
-                  │         Log to DB ────> │ Database │
+                  │         Log to DB ────>  │ Database │
                   │              ↓           │ Manager  │
                   │         Return URL       └──────────┘
                   │              ↓                ↓
@@ -115,14 +115,14 @@
            Upload CSV       Save File      Read Names
                   ↓              ↓                ↓
                   │              │         ┌──────────┐
-                  │              │    ┌───>│iteration1│─┐
+                  │              │    ┌───>│app.py│─┐
                   │              │    │    └──────────┘ │
                   │              │    │         ↓       │
                   │              │    │    Generate     │
                   │              │    │    Audio 1      │
                   │              │    │         ↓       │
                   │              │    │    ┌──────────┐ │
-                  │              │    └───>│iteration1│─┘
+                  │              │    └───>│app.py    │─┘
                   │              │         └──────────┘
                   │              │         (Loop for
                   │              │         all names)
@@ -130,7 +130,7 @@
                   │         Collect URLs   Save All MP3s
                   │              ↓              ↓
                   │              ↓         ┌──────────┐
-                  │         Log to DB ──> │ Database │
+                  │         Log to DB ──>  │ Database │
                   │              ↓         │ Manager  │
                   │         JSON Array     └──────────┘
                   │              ↓              ↓
@@ -183,37 +183,37 @@
 │         (Abstraction Layer)                            │
 ├────────────────────────────────────────────────────────┤
 │                                                        │
-│  Class: DatabaseManager                               │
-│  ├─ __init__()                                        │
-│  │   └─ Create SQLAlchemy engine                     │
-│  │                                                    │
-│  ├─ Connection Methods                               │
-│  │   ├─ _connect()                                   │
-│  │   └─ test_connection()                            │
-│  │                                                    │
-│  ├─ Insert Methods (Write Operations)                │
-│  │   ├─ insert_driver_record()                       │
-│  │   ├─ insert_single_record()                       │
-│  │   └─ insert_csv_upload_record()                   │
-│  │                                                    │
-│  ├─ Query Methods (Read Operations)                  │
-│  │   ├─ get_driver_records()                         │
-│  │   ├─ get_single_records()                         │
-│  │   ├─ get_csv_upload_records()                     │
-│  │   ├─ get_single_operations_with_details()         │
-│  │   ├─ get_csv_operations_with_details()            │
-│  │   └─ get_operation_by_id()                        │
-│  │                                                    │
-│  └─ Utility Methods                                  │
-│      ├─ get_all_tables_info()                        │
-│      └─ close_connection()                           │
+│  Class: DatabaseManager                                │
+│  ├─ __init__()                                         │
+│  │   └─ Create SQLAlchemy engine                       │
+│  │                                                     │
+│  ├─ Connection Methods                                 │
+│  │   ├─ _connect()                                     │
+│  │   └─ test_connection()                              │
+│  │                                                     │
+│  ├─ Insert Methods (Write Operations)                  │
+│  │   ├─ insert_driver_record()                         │
+│  │   ├─ insert_single_record()                         │
+│  │   └─ insert_csv_upload_record()                     │
+│  │                                                     │
+│  ├─ Query Methods (Read Operations)                    │
+│  │   ├─ get_driver_records()                           │
+│  │   ├─ get_single_records()                           │
+│  │   ├─ get_csv_upload_records()                       │
+│  │   ├─ get_single_operations_with_details()           │
+│  │   ├─ get_csv_operations_with_details()              │  
+│  │   └─ get_operation_by_id()                          │
+│  │                                                     │
+│  └─ Utility Methods                                    │
+│      ├─ get_all_tables_info()                          │
+│      └─ close_connection()                             │
 │                                                        │
-│  Benefits:                                            │
-│  • Single point of database access                   │
-│  • SQL abstraction (Flask doesn't write SQL)         │
-│  • Easy to test and maintain                         │
-│  • Pandas DataFrame integration                      │
-│  • Type hints and documentation                      │
+│  Benefits:                                             │
+│  • Single point of database access                     │
+│  • SQL abstraction (Flask doesn't write SQL)           │
+│  • Easy to test and maintain                           │
+│  • Pandas DataFrame integration                        │
+│  • Type hints and documentation                        │
 │                                                        │
 └────────────────────────────────────────────────────────┘
 ```
@@ -294,7 +294,7 @@ Flask Backend Startup
       ↓             ↓
 ┌─────────────┐  ┌──────────────┐
 │Print:       │  │Print:        │
-│✅ Database  │  │⚠️  Database  │
+│Database     │  │Database      │
 │connected    │  │not available │
 └──────┬──────┘  └──────┬───────┘
        │                │
@@ -330,17 +330,17 @@ Flask Backend Startup
 │  Monitoring API                              │
 │  └─ /api/                                    │
 │      ├─ GET /health                          │
-│      │   └─ Check app & DB status           │
+│      │   └─ Check app & DB status            │
 │      │                                       │
 │      ├─ GET /stats                           │
-│      │   └─ Get record counts               │
+│      │   └─ Get record counts                │
 │      │                                       │
 │      └─ /operations/                         │
 │          ├─ GET /recent?limit=N              │
-│          │   └─ Latest N operations         │
+│          │   └─ Latest N operations          │
 │          │                                   │
 │          ├─ GET /single?limit=N              │
-│          │   └─ Single text ops             │
+│          │   └─ Single text ops              │
 │          │                                   │
 │          └─ GET /csv?limit=N                 │
 │              └─ CSV upload ops               │

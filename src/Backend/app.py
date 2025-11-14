@@ -1,6 +1,8 @@
 import csv
 import sys, os
 from pathlib import Path
+
+import requests
 from flask import Flask, render_template, request, jsonify, url_for
 from service import pronounce_name
 from databridge import get_db
@@ -42,21 +44,16 @@ def pronounce():
             driver_id = db.insert_driver_record("single_text")
 
             # Insert user input into single table
-            single_id = db.insert_single_record(driver_id, name)
+            db.insert_single_record(driver_id, name)
             print(f"Logged single pronunciation to database: {name}")
-
-            return jsonify({
-                "user request": name,
-                "status": "success",
-            })
         except Exception as db_error:
             print(f"Database logging failed: {db_error}")
 
-            return jsonify({
-                "user request": name,
-                "status": "error",
-                "error": str(db_error),
-            }), 500
+    return jsonify({
+        "user request": name,
+        "audio_url": audio_url,
+        "status": "success"
+    })
 
 
 # Handles CSV uploads
@@ -124,6 +121,77 @@ def upload():
     print("Returning JSON:", audio_urls)
     return jsonify({"audios": audio_urls})
 
+#Name Origin and Ethnicity
+
+BTN_API_KEY = os.getenv("BTN_API_KEY")
+
+@app.route("/name_facts", methods=["POST"])
+def name_facts():
+    name = request.form.get("name")
+    if not name:
+        return jsonify({"error": "Name is required"}), 400
+
+    first_name = name.split()[0].strip()
+
+    result = {
+        "name": name,
+        "origin": "Unknown",
+        "ethnicity": []
+    }
+
+    #  Nationalize.io ( Handles Ethnicity Probability)
+    top_country = None
+    top_prob = 0.0
+
+    try:
+        nat_res = requests.get(f"https://api.nationalize.io/?name={first_name}", timeout=5)
+        if nat_res.status_code == 200:
+            nat_data = nat_res.json()
+            for c in nat_data.get("country", []):
+                prob = round(c.get("probability", 0.0) * 100, 1)
+                country_id = c.get("country_id")
+
+                result["ethnicity"].append({
+                    "country": country_id,
+                    "probability": prob
+                })
+
+                if prob > top_prob:
+                    top_prob = prob
+                    top_country = country_id
+
+    except Exception:
+        pass
+
+    # Behind The Name API (handles the Origin) --------
+    try:
+        if BTN_API_KEY:
+            url = "https://www.behindthename.com/api/lookup.json"
+            params = {"name": first_name, "key": BTN_API_KEY}
+            r = requests.get(url, params=params, timeout=5)
+
+            if r.status_code == 200:
+                data = r.json()
+                if isinstance(data, list) and len(data) > 0:
+                    entry = data[0]
+                    usages = entry.get("usages", [])
+                    origins = [u.get("usage_full") for u in usages if u.get("usage_full")]
+
+                    if origins:
+                        result["origin"] = ", ".join(origins)
+
+    except Exception:
+        pass
+
+    # Origin Backup (Using Nationalize)
+    if result["origin"] == "Unknown":
+        if top_country and top_prob >= 25:  # Only assign if strong probability
+            result["origin"] = f"Likely {top_country}"
+        else:
+            result["origin"] = "Not available"
+
+    return jsonify(result)
+
 
 # Health check route
 @app.route("/api/health", methods=["GET"])
@@ -151,4 +219,4 @@ def health_check():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=5051)
