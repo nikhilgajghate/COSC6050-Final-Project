@@ -10,8 +10,9 @@ load_dotenv()
 client = ElevenLabs(api_key = os.getenv("ELEVENLABS_API_KEY"))
 
 # Output folder to store output audio files. 
-OUTPUT_FOLDER = "static/audio"
-os.makedirs(OUTPUT_FOLDER, exist_ok=True) # Create output folder if it does not exist.
+OUTPUT_FOLDER = os.path.join(os.path.dirname(__file__), "../Frontend/static/audio")
+OUTPUT_FOLDER = os.path.abspath(OUTPUT_FOLDER)
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 def pronounce_name(name):
     """
@@ -31,8 +32,6 @@ def pronounce_name(name):
         model_id="eleven_multilingual_v2"
     )
 
-    # Play audio
-    play(audio)
     
     # Save audio to file
     with open(filepath, "wb") as f:
