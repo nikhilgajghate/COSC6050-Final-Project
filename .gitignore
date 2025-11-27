@@ -1,6 +1,12 @@
 # static files
-static/audio/
-static/uploads/
+src/Frontend/static/audio/
+src/Frontend/static/uploads/
+
+# .idea/
+.idea/
+
+# diagrams
+diagrams/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
