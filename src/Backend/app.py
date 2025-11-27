@@ -1,6 +1,10 @@
 import csv
 import sys, os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file using dotenv
+load_dotenv()
 
 import requests
 from flask import Flask, render_template, request, jsonify, url_for
@@ -96,6 +100,7 @@ def upload():
                     audio_urls.append({"name": name, "audio_url": audio_url})
                 except Exception as e:
                     print(f"Error pronouncing '{name}': {e}")
+
     except Exception as e:
         print("CSV Read Error:", e)
         return jsonify({"error": str(e)}), 500
@@ -110,27 +115,27 @@ def upload():
             driver_id = db.insert_driver_record("csv_upload")
             db.insert_csv_upload_record(driver_id, file.filename, names_list)
             print(f"Logged CSV upload to database: {file.filename} ({len(names_list)} names)")
-            return jsonify({
-                "user request": names_list,
-                "status": "success",
-            })
         except Exception as db_error:
             print(f"Database logging failed: {db_error}")
             # Continue even if database logging fails
+    
+    return jsonify({
+        "audios": audio_urls
+    })
 
-    print("Returning JSON:", audio_urls)
-    return jsonify({"audios": audio_urls})
-
-#Name Origin and Ethnicity
-
-BTN_API_KEY = os.getenv("BTN_API_KEY")
-
+# Handles cultural origins of the user input
 @app.route("/name_facts", methods=["POST"])
 def name_facts():
+    """
+    Flask router for displaying cultural origins of the user input. 
+    """
+
+    # Retrieve user input/name from form data
     name = request.form.get("name")
     if not name:
         return jsonify({"error": "Name is required"}), 400
 
+    # Perform basic name parsing
     first_name = name.split()[0].strip()
 
     result = {
@@ -139,13 +144,18 @@ def name_facts():
         "ethnicity": []
     }
 
-    #  Nationalize.io ( Handles Ethnicity Probability)
+    # Nationalize.io (Handles Ethnicity Probability)
     top_country = None
     top_prob = 0.0
 
     try:
+        # Make a GET Request to the Nationalize.io API
         nat_res = requests.get(f"https://api.nationalize.io/?name={first_name}", timeout=5)
+
+        # Check if the request was successful
         if nat_res.status_code == 200:
+
+            # Parse the response as JSON
             nat_data = nat_res.json()
             for c in nat_data.get("country", []):
                 prob = round(c.get("probability", 0.0) * 100, 1)
@@ -163,10 +173,11 @@ def name_facts():
     except Exception:
         pass
 
-    # Behind The Name API (handles the Origin) --------
+    # Behind The Name API to retrieve the origin of the name
+    BTN_API_KEY = os.getenv("BTN_API_KEY")
     try:
         if BTN_API_KEY:
-            url = "https://www.behindthename.com/api/lookup.json"
+            url = os.getenv("BTN_API_URL")
             params = {"name": first_name, "key": BTN_API_KEY}
             r = requests.get(url, params=params, timeout=5)
 

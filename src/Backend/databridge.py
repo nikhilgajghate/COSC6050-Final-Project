@@ -16,9 +16,9 @@ def get_db():
     if db_manager is None:
         try:
             db_manager = DatabaseManager()
-            print("✅ Database connection established")
+            print("Database connection established")
         except Exception as e:
-            print(f"⚠️  Database not available: {e}")
+            print(f"Database not available: {e}")
             print("   The app will continue without database logging.")
             db_manager = False  # Set to False to indicate we tried and failed
     return db_manager if db_manager is not False else None
