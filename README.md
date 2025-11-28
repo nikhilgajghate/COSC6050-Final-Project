@@ -82,18 +82,26 @@ Try:
 ```
 COSC6050-Final-Project/
 ├── src/
-│   ├── main.py                    # CLI version
-│   ├── database_manager.py        # Database operations layer
+│   ├── database_manager.py        # Database operations layer (PostgreSQL)
 │   ├── Backend/
-│   │   ├── app.py                # Flask server (with DB integration)
-│   │   └── iteration1.py         # Audio generation
+│   │   ├── app.py                 # Flask server (main API endpoints)
+│   │   ├── service.py             # Audio generation service (ElevenLabs)
+│   │   └── databridge.py          # Database connection bridge
 │   └── Frontend/
 │       ├── templates/
-│       │   └── index.html        # Main UI
-│       └── static/               # Assets, CSS, JS
+│       │   └── index.html         # Main UI (Bootstrap 5)
+│       └── static/
+│           ├── assets/            # CSS, JS, images, vendor libraries
+│           └── uploads/           # Uploaded CSV files
 ├── database/
-│   ├── setup_database.py         # Automated setup script
-│   ├── reset_database.py         # Reset script
-│   └── *.sql                     # SQL schema files
-└── .env                          # Configuration (create this)
+│   ├── 00_setup_database.sql      # Database initialization
+│   ├── 01_create_driver_table.sql # Session tracking table
+│   ├── 02_create_single_table.sql # Individual name requests
+│   ├── 03_create_csv_upload_table.sql # CSV upload tracking
+│   ├── create_all_tables.sql      # Combined table creation
+│   ├── drop_all_tables.sql        # Database reset
+│   ├── README.md                  # Database documentation
+│   └── SCHEMA_DIAGRAM.md          # ER diagram and schema details
+├── .env                           # Environment configuration (create this)
+└── requirements.txt               # Python dependencies
 ```
